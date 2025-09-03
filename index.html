@@ -5,33 +5,87 @@
 <title>五块卵石</title>
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <style>
-html,body{margin:0;height:100%;background:#000;color:#fff;font-family:monospace;font-size:clamp(14px,2.5vw,20px)}
-#box{
-  max-width:700px;
-  margin:10vh auto;
-  padding:0 20px;
-  line-height:1.8;
-  white-space:pre-wrap;
-  word-break:break-word;
-}
+html,body{margin:0;height:100%;background:#000;color:#fff;font-family:monospace}
+#game,#text{display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%}
+.btn{position:relative;width:160px;height:60px;margin:20px;font-size:20px;border:none;border-radius:8px;cursor:pointer;transition:transform .2s}
+#btnA{background:#fff;color:#f00}            /* 白底红字 */
+#btnB{background:#000;color:#fff;border:2px solid #fff} /* 黑底白字 */
+#hint{position:fixed;top:10%;left:50%;transform:translateX(-50%);font-size:18px;transition:color .3s}
+#box{max-width:700px;margin:10vh auto;padding:0 20px;line-height:1.8;white-space:pre-wrap;word-break:break-word}
 .cursor:after{content:"_";animation:blink 1s steps(2) infinite}
 @keyframes blink{0%{opacity:1}100%{opacity:0}}
 </style>
 </head>
 <body>
-<div id="box"><span id="txt"></span><span class="cursor"></span></div>
+
+<!-- 开场提问 -->
+<div id="game">
+    <div id="question" style="margin-bottom:30px;font-size:22px;">是否立刻暴力的取出并读取珍珠</div>
+    <button id="btnA" class="btn">是</button>
+    <button id="btnB" class="btn">否</button>
+</div>
+
+<!-- 提示 -->
+<div id="hint"></div>
+
+<!-- 正文 -->
+<div id="text" style="display:none">
+    <div id="box"><span id="txt"></span><span class="cursor"></span></div>
+</div>
+
+<!-- 背景音乐 -->
+<audio id="bgm" src="bgm.mp3" loop></audio>
 
 <script>
+const btnA   = document.getElementById('btnA');
+const btnB   = document.getElementById('btnB');
+const game   = document.getElementById('game');
+const text   = document.getElementById('text');
+const hint   = document.getElementById('hint');
+const bgm    = document.getElementById('bgm');
+
+let bCount = 0;          // 已按 B 的次数
+const step   = 0.05;     // 缩小/放大步长
+let scaleA   = 1;
+let scaleB   = 1;
+
+/* 浏览器禁止自动播放，首次点击再播放 */
+function playBgm() { bgm.play(); document.removeEventListener('click', playBgm); }
+document.addEventListener('click', playBgm);
+
+/* 选 B：持续缩小 B、放大 A + 提示 + 感叹号 */
+btnB.onclick = () => {
+    bCount++;
+    scaleB = Math.max(0, scaleB - step);
+    scaleA += step;
+    btnB.style.transform = `scale(${scaleB})`;
+    btnA.style.transform = `scale(${scaleA})`;
+
+    // 提示文字：逐渐变红
+    const red = Math.min(255, 55 + bCount * 40);
+    hint.style.color = `rgb(${red},0,0)`;
+    hint.textContent = `我已经没有多少时间了${'!'.repeat(bCount)}`;
+    hint.style.opacity = 1;
+};
+
+/* 选 A：立即进入正文 */
+btnA.onclick = () => {
+    game.style.display  = 'none';
+    text.style.display  = 'block';
+    hint.style.display  = 'none';
+    playBgm();
+    startTyping();
+};
+
+/* ---------- 打字机正文 ---------- */
 const passage = `五块卵石，作为担心你的老朋友，我才给你发来消息。无比纯真派了一个监视者到你的罐头去，而且我们都观察到了你在其中的状态。我知道这是我的错，我早该预见到你会非常绝望，以至于无法摆脱你的处境，无法控制自己。为此我非常非常抱歉。但是，请不要禁用你的通讯模块。你不必独自经历这一切…大家都一直在尝试与你联系，我们只是想帮助你。你在罐头中的行为变得不稳定，这不健康，也不会解决你的问题。我们也失去了来自月姐的所有通讯，并且有理由相信她的设施可能就是因为你试图修复自己而遭受了不可逆转的损害。我比任何人都清楚你可以如何处理这些事情，但你没有必要这样……请你回复我。`;
 let i = 0;
-const speed = 90; // 毫秒/字，可改快慢
-function type(){
-  if(i < passage.length){
-    document.getElementById('txt').textContent += passage[i++];
-    setTimeout(type, speed);
-  }
+function startTyping() {
+    if (i < passage.length) {
+        document.getElementById('txt').textContent += passage[i++];
+        setTimeout(startTyping, 90);
+    }
 }
-type();
 </script>
 </body>
 </html>
